@@ -1,0 +1,35 @@
+# Sistema operativo
+Thumbs.db
+.DS_Store
+
+# Editor / IDE
+.vscode/
+*.swp
+*~
+
+# Archivos de compilación / dependencias
+node_modules/
+build/
+dist/
+
+# Archivos temporales y de caché
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Archivos de sistema específicos de Windows
+ehthumbs.db
+Icon?\r
+
+# Archivos de Prolog / proyecto
+*.aux
+*.tmp
+*.bak
+*.old
+
+# Archivos de backup de MS Office
+~$*
+
+# Ignorar carpetas vacías si no hay contenido
+# Nota: Git no rastrea carpetas vacías de todas formas, solo archivos dentro de ellas.
