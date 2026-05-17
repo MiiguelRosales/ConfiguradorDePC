@@ -1,0 +1,517 @@
+:root {
+	--bg-primary: #090f1f;
+	--bg-secondary: #101a38;
+	--accent-cyan: #1cf0ff;
+	--accent-lime: #8bff3d;
+	--accent-red: #ff3158;
+	--text-main: #f5f8ff;
+	--text-soft: #b5bfd8;
+	--panel-border: rgba(28, 240, 255, 0.45);
+	--panel-shadow: rgba(28, 240, 255, 0.2);
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	min-height: 100vh;
+	color: var(--text-main);
+	font-family: "Rajdhani", sans-serif;
+	position: relative;
+	isolation: isolate;
+	background: linear-gradient(130deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+	overflow: hidden;
+}
+
+.space-background {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.solar-system {
+	position: relative;
+	width: clamp(152rem, 180vw, 240rem);
+	height: clamp(152rem, 180vw, 240rem);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	animation: rotateSystem 140s linear infinite;
+}
+
+.sun {
+	position: absolute;
+	width: 16rem;
+	height: 16rem;
+	border-radius: 50%;
+	background: linear-gradient(to bottom right, #f59e0b, #ea580c, #dc2626);
+	animation: pulse 2s ease-in-out infinite;
+	box-shadow: 0 0 140px rgba(255, 165, 0, 0.65);
+	z-index: 4;
+}
+
+.sun::before {
+	content: "";
+	position: absolute;
+	inset: -2px;
+	border-radius: 50%;
+	background: linear-gradient(
+		to bottom right,
+		rgba(255, 236, 153, 0.2),
+		rgba(220, 38, 38, 0.2)
+	);
+	animation: spin 3s linear infinite;
+}
+
+.corona {
+	position: absolute;
+	inset: -1rem;
+	border-radius: 50%;
+	background: linear-gradient(
+		to bottom right,
+		rgba(245, 158, 11, 0.2),
+		rgba(220, 38, 38, 0.2)
+	);
+	filter: blur(8px);
+	animation: pulse 2s ease-in-out infinite;
+}
+
+.orbit {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.mercury-orbit {
+	width: 24rem;
+	height: 24rem;
+}
+
+.venus-orbit {
+	width: 36rem;
+	height: 36rem;
+}
+
+.earth-orbit {
+	width: 48rem;
+	height: 48rem;
+	z-index: 2;
+}
+
+.mars-orbit {
+	width: 68rem;
+	height: 68rem;
+}
+
+.planet {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	border-radius: 50%;
+	z-index: 3;
+	transform-origin: center center;
+}
+
+.mercury {
+	width: 1.5rem;
+	height: 1.5rem;
+	background: linear-gradient(to bottom right, #d1d5db, #9ca3af);
+	box-shadow: 0 0 22px rgba(156, 163, 175, 0.65);
+	--orbit-width: 24rem;
+	animation: orbit 4s linear infinite;
+}
+
+.venus {
+	width: 2rem;
+	height: 2rem;
+	background: linear-gradient(to bottom right, #fef3c7, #fcd34d);
+	box-shadow: 0 0 25px rgba(252, 211, 77, 0.7);
+	--orbit-width: 36rem;
+	animation: orbit 6s linear infinite;
+}
+
+.earth {
+	width: 2.8rem;
+	height: 2.8rem;
+	background: linear-gradient(to bottom right, #60a5fa, #34d399);
+	box-shadow: 0 0 27px rgba(96, 165, 250, 0.7);
+	--orbit-width: 48rem;
+	animation: orbit 8s linear infinite;
+}
+
+.moon {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background: #d1d5db;
+	box-shadow: inset 0 0 7px rgba(156, 163, 175, 0.6);
+	animation: orbit 2s linear infinite;
+	transform-origin: center center;
+}
+
+.mars {
+	width: 2rem;
+	height: 2rem;
+	background: linear-gradient(to bottom right, #f87171, #dc2626);
+	box-shadow: 0 0 25px rgba(220, 38, 38, 0.6);
+	--orbit-width: 68rem;
+	animation: orbit 10s linear infinite;
+}
+
+.iss {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 1.2rem;
+	height: 0.6rem;
+	background: #e5e7eb;
+	border-radius: 2px;
+	box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+	z-index: 3;
+	--iss-orbit: 22rem;
+	animation: iss-orbit 5s linear infinite;
+	transform-origin: center center;
+}
+
+.iss-panels {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 1.2rem;
+	height: 0.15rem;
+	background: linear-gradient(to right, #60a5fa, #93c5fd);
+	transform: translate(-50%, -50%);
+	box-shadow: 0 0 5px rgba(96, 165, 250, 0.5);
+}
+
+.iss::after {
+	content: "";
+	position: absolute;
+	inset: -1px;
+	background: white;
+	border-radius: 2px;
+	opacity: 0;
+	animation: iss-flare 1.5s linear infinite;
+}
+
+.stars {
+	position: absolute;
+	inset: -8rem;
+	z-index: 5;
+	pointer-events: none;
+}
+
+.stars::before,
+.stars::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 0.25rem;
+	height: 0.25rem;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow:
+		4vw 6vh white, 18vw 12vh white, 36vw 22vh white, 52vw 6vh white, 70vw 16vh white,
+		86vw 8vh white, 10vw 70vh white, 26vw 82vh white, 41vw 58vh white, 58vw 76vh white,
+		73vw 58vh white, 88vw 80vh white, 14vw 38vh white, 28vw 54vh white, 33vw 12vh white,
+		47vw 28vh white, 66vw 34vh white, 82vw 44vh white, 94vw 24vh white, 5vw 90vh white,
+		17vw 68vh white, 22vw 44vh white, 38vw 32vh white, 58vw 10vh white, 64vw 56vh white;
+	animation: twinkle 5s linear infinite;
+}
+
+.stars::after {
+	box-shadow:
+		8vw 16vh white, 20vw 4vh white, 31vw 76vh white, 46vw 84vh white, 63vw 14vh white,
+		79vw 66vh white, 92vw 34vh white, 15vw 90vh white, 29vw 18vh white, 45vw 56vh white,
+		55vw 30vh white, 69vw 80vh white, 84vw 50vh white, 90vw 14vh white, 12vw 58vh white,
+		24vw 34vh white, 40vw 92vh white, 52vw 48vh white, 67vw 22vh white, 73vw 72vh white,
+		88vw 58vh white, 95vw 86vh white, 6vw 50vh white, 17vw 26vh white, 38vw 14vh white;
+	animation-duration: 6s;
+	animation-delay: 0.7s;
+}
+
+.star {
+	position: absolute;
+	width: 0.25rem;
+	height: 0.25rem;
+	background: white;
+	border-radius: 50%;
+}
+
+.star-1 {
+	top: 25%;
+	left: 25%;
+	animation: ping 2s ease-in-out infinite;
+}
+.star-2 {
+	top: 75%;
+	left: 33%;
+	animation: ping 3s ease-in-out infinite 0.5s;
+}
+.star-3 {
+	top: 33%;
+	right: 25%;
+	animation: ping 2.5s ease-in-out infinite 0.7s;
+}
+.star-4 {
+	bottom: 25%;
+	right: 33%;
+	animation: ping 2.7s ease-in-out infinite 0.3s;
+}
+.star-5 {
+	top: 50%;
+	right: 50%;
+	animation: ping 2.3s ease-in-out infinite 0.8s;
+}
+
+.hero-wrapper,
+.config-wrapper {
+	position: relative;
+	z-index: 1;
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 1.5rem;
+}
+
+.grid-overlay {
+	position: absolute;
+	inset: 0;
+	background-image:
+		linear-gradient(rgba(28, 240, 255, 0.08) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(28, 240, 255, 0.08) 1px, transparent 1px);
+	background-size: 50px 50px;
+	-webkit-mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+	mask-image: radial-gradient(circle at center, black 45%, transparent 95%);
+	pointer-events: none;
+	animation: pulseGrid 6s linear infinite;
+}
+
+.hero-panel,
+.config-panel {
+	width: min(900px, 100%);
+	border: 1px solid var(--panel-border);
+	background: rgba(9, 14, 33, 0.78);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+	border-radius: 20px;
+	padding: clamp(1.4rem, 3vw, 2.6rem);
+	box-shadow:
+		0 0 18px var(--panel-shadow),
+		inset 0 0 20px rgba(139, 255, 61, 0.06);
+	animation: heartbeatGlow 2.8s ease-in-out infinite;
+}
+
+.hero-kicker,
+.config-kicker {
+	color: var(--accent-lime);
+	letter-spacing: 0.18rem;
+	font-size: 0.9rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	margin-bottom: 0.85rem;
+}
+
+.hero-title,
+.config-title {
+	font-family: "Orbitron", sans-serif;
+	font-size: clamp(1.7rem, 4vw, 3.15rem);
+	line-height: 1.15;
+	text-transform: uppercase;
+	text-shadow: 0 0 16px rgba(28, 240, 255, 0.45);
+	margin-bottom: 1.1rem;
+}
+
+.hero-copy,
+.config-copy {
+	color: var(--text-soft);
+	max-width: 60ch;
+	font-size: clamp(1.05rem, 2vw, 1.3rem);
+	margin-bottom: 1.8rem;
+}
+
+.btn-neon,
+.btn-secondary {
+	border: none;
+	cursor: pointer;
+	border-radius: 12px;
+	font-family: "Orbitron", sans-serif;
+	text-transform: uppercase;
+	transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn-neon {
+	padding: 0.95rem 1.6rem;
+	font-size: 1rem;
+	color: #04110a;
+	background: linear-gradient(90deg, var(--accent-lime), var(--accent-cyan));
+	box-shadow: 0 0 18px rgba(139, 255, 61, 0.38);
+}
+
+.btn-secondary {
+	padding: 0.8rem 1.25rem;
+	color: var(--text-main);
+	background: linear-gradient(90deg, #243968, #2b2350);
+	box-shadow: 0 0 14px rgba(28, 240, 255, 0.24);
+}
+
+.btn-neon:hover,
+.btn-secondary:hover {
+	transform: translateY(-2px) scale(1.01);
+}
+
+.btn-neon:active,
+.btn-secondary:active {
+	transform: translateY(0);
+}
+
+.config-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 1rem;
+	margin-bottom: 1.2rem;
+}
+
+.part-card {
+	border: 1px solid rgba(181, 191, 216, 0.23);
+	border-radius: 14px;
+	padding: 1rem;
+	background: rgba(15, 26, 51, 0.8);
+	min-height: 130px;
+}
+
+.part-card h3 {
+	font-family: "Orbitron", sans-serif;
+	font-size: 1rem;
+	margin-bottom: 0.35rem;
+	color: var(--accent-cyan);
+}
+
+.part-card p {
+	color: var(--text-soft);
+	font-size: 1.03rem;
+}
+
+.actions {
+	display: flex;
+	gap: 0.8rem;
+	flex-wrap: wrap;
+}
+
+@keyframes pulseGrid {
+	0% {
+		opacity: 0.45;
+	}
+	50% {
+		opacity: 0.65;
+	}
+	100% {
+		opacity: 0.45;
+	}
+}
+
+@keyframes twinkle {
+	0%, 100% {
+		opacity: 0.9;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.15;
+		transform: scale(0.7);
+	}
+}
+
+
+@keyframes heartbeatGlow {
+	0%, 100% {
+		box-shadow:
+			0 0 26px 4px rgba(28, 240, 255, 0.25),
+			inset 0 0 26px rgba(139, 255, 61, 0.08);
+		border-color: rgba(28, 240, 255, 0.45);
+	}
+	35% {
+		box-shadow:
+			0 0 36px 6px rgba(28, 240, 255, 0.42),
+			inset 0 0 32px rgba(139, 255, 61, 0.18);
+		border-color: rgba(28, 240, 255, 0.85);
+	}
+	70% {
+		box-shadow:
+			0 0 30px 5px rgba(28, 240, 255, 0.34),
+			inset 0 0 28px rgba(139, 255, 61, 0.12);
+		border-color: rgba(28, 240, 255, 0.58);
+	}
+}
+
+@keyframes rotateSystem {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+@keyframes orbit {
+	from {
+		transform: rotate(0deg) translateX(calc(var(--orbit-width) / 2)) rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg) translateX(calc(var(--orbit-width) / 2)) rotate(-360deg);
+	}
+}
+
+@keyframes iss-orbit {
+	from {
+		transform: rotate(0deg) translateX(var(--iss-orbit)) rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg) translateX(var(--iss-orbit)) rotate(-360deg);
+	}
+}
+
+@keyframes iss-flare {
+	0%, 100% { opacity: 0; }
+	50% { opacity: 0.3; }
+}
+
+@keyframes pulse {
+	50% { opacity: 0.8; }
+}
+
+@keyframes ping {
+	75%, 100% {
+		transform: scale(2);
+		opacity: 0;
+	}
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+@media (max-width: 560px) {
+	.hero-panel,
+	.config-panel {
+		border-radius: 16px;
+	}
+
+	.hero-copy,
+	.config-copy {
+		margin-bottom: 1.3rem;
+	}
+
+	.actions {
+		flex-direction: column;
+	}
+}

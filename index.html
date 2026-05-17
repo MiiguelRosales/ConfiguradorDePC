@@ -3,9 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hola Mundo</title>
+    <title>Configurador Gamer de PC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <h1>Hola mundo</h1>
+<body class="inicio-body">
+	<div class="space-background" aria-hidden="true">
+		<div class="solar-system">
+			<div class="sun">
+				<div class="corona"></div>
+			</div>
+			<div class="orbit mercury-orbit">
+				<div class="planet mercury"></div>
+			</div>
+			<div class="orbit venus-orbit">
+				<div class="planet venus"></div>
+			</div>
+			<div class="orbit earth-orbit">
+				<div class="planet earth">
+					<div class="moon"></div>
+				</div>
+				<div class="iss">
+					<div class="iss-panels"></div>
+				</div>
+			</div>
+			<div class="orbit mars-orbit">
+				<div class="planet mars"></div>
+			</div>
+			<div class="stars">
+				<div class="star star-1"></div>
+				<div class="star star-2"></div>
+				<div class="star star-3"></div>
+				<div class="star star-4"></div>
+				<div class="star star-5"></div>
+			</div>
+		</div>
+	</div>
+    <main class="hero-wrapper">
+        <div class="grid-overlay" aria-hidden="true"></div>
+
+        <section class="hero-panel" aria-label="Pantalla de inicio del configurador">
+            <p class="hero-kicker">MODO ENSAMBLAJE ACTIVO</p>
+            <h1 class="hero-title">COMENZAR A CONFIGURAR TU PC</h1>
+            <p class="hero-copy">
+                Selecciona tu estilo de juego y arma una computadora lista para dominar cada partida.
+            </p>
+
+            <button id="btnComenzar" class="btn-neon" type="button">
+                Iniciar Configurador
+            </button>
+        </section>
+    </main>
+
+    <script src="js/script.js"></script>
 </body>
 </html>

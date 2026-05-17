@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tu Configuración Gamer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="config-body">
+	<div class="space-background" aria-hidden="true">
+		<div class="solar-system">
+			<div class="sun">
+				<div class="corona"></div>
+			</div>
+			<div class="orbit mercury-orbit">
+				<div class="planet mercury"></div>
+			</div>
+			<div class="orbit venus-orbit">
+				<div class="planet venus"></div>
+			</div>
+			<div class="orbit earth-orbit">
+				<div class="planet earth">
+					<div class="moon"></div>
+				</div>
+				<div class="iss">
+					<div class="iss-panels"></div>
+				</div>
+			</div>
+			<div class="orbit mars-orbit">
+				<div class="planet mars"></div>
+			</div>
+			<div class="stars">
+				<div class="star star-1"></div>
+				<div class="star star-2"></div>
+				<div class="star star-3"></div>
+				<div class="star star-4"></div>
+				<div class="star star-5"></div>
+			</div>
+		</div>
+	</div>
+	<main class="config-wrapper">
+		<div class="grid-overlay" aria-hidden="true"></div>
+
+		<section class="config-panel" aria-label="Configuración gamer recomendada">
+			<p class="config-kicker">SELECCIÓN AUTOMÁTICA</p>
+			<h1 class="config-title">Tu Build Gamer</h1>
+			<p class="config-copy">
+				Esta combinación te da rendimiento competitivo en shooters, aventuras AAA y streaming.
+			</p>
+
+			<div class="config-grid">
+				<article class="part-card">
+					<h3>Procesador</h3>
+					<p id="cpuValue"></p>
+				</article>
+
+				<article class="part-card">
+					<h3>Tarjeta Gráfica</h3>
+					<p id="gpuValue"></p>
+				</article>
+
+				<article class="part-card">
+					<h3>Memoria RAM</h3>
+					<p id="ramValue"></p>
+				</article>
+
+				<article class="part-card">
+					<h3>Almacenamiento</h3>
+					<p id="ssdValue"></p>
+				</article>
+
+				<article class="part-card">
+					<h3>Fuente de Poder</h3>
+					<p id="psuValue"></p>
+				</article>
+			</div>
+
+			<div class="actions">
+				<button id="btnGenerar" class="btn-neon" type="button">Generar Otra Build</button>
+				<button id="btnReiniciar" class="btn-secondary" type="button">Volver al Inicio</button>
+			</div>
+		</section>
+	</main>
+
+	<script src="../js/script.js"></script>
+</body>
+</html>
