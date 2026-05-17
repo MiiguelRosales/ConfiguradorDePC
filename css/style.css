@@ -23,7 +23,8 @@ body {
 	position: relative;
 	isolation: isolate;
 	background: linear-gradient(130deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .space-background {
@@ -384,6 +385,111 @@ body {
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 	gap: 1rem;
 	margin-bottom: 1.2rem;
+}
+
+.recommendation-section {
+	margin-bottom: 2rem;
+}
+
+.recommendation-section h2 {
+	font-family: "Orbitron", sans-serif;
+	font-size: 1.15rem;
+	margin-bottom: 1rem;
+	color: var(--accent-cyan);
+}
+
+.recommendation-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 1rem;
+}
+
+.recommendation-card {
+	border: 1px solid rgba(181, 191, 216, 0.22);
+	border-radius: 16px;
+	padding: 1rem;
+	background: rgba(12, 22, 43, 0.88);
+	box-shadow: 0 0 18px rgba(28, 240, 255, 0.08);
+}
+
+.recommendation-card h3 {
+	font-family: "Orbitron", sans-serif;
+	font-size: 1rem;
+	margin-bottom: 0.65rem;
+	color: var(--accent-lime);
+}
+
+.recommendation-card p {
+	color: var(--text-soft);
+	font-size: 0.95rem;
+	line-height: 1.5;
+	margin-bottom: 0.55rem;
+}
+
+.recommendation-card .tag {
+	display: inline-flex;
+	padding: 0.25rem 0.6rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	letter-spacing: 0.08rem;
+	text-transform: uppercase;
+	background: rgba(28, 240, 255, 0.12);
+	color: var(--accent-cyan);
+}
+
+.selection-panel {
+	display: grid;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+.category-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+	margin-bottom: 1rem;
+}
+
+.category-button {
+	padding: 0.65rem 1rem;
+	border: 1px solid rgba(181, 191, 216, 0.18);
+	border-radius: 999px;
+	background: rgba(12, 22, 43, 0.88);
+	color: var(--text-soft);
+	cursor: pointer;
+	transition: transform 0.16s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.category-button:hover,
+.category-button.active {
+	border-color: rgba(28, 240, 255, 0.45);
+	color: var(--accent-cyan);
+	transform: translateY(-1px);
+}
+
+.current-category-title {
+	padding: 1rem 0.25rem;
+}
+
+.current-category-title h2 {
+	font-family: "Orbitron", sans-serif;
+	margin-bottom: 0.4rem;
+	color: var(--accent-cyan);
+}
+
+.current-category-title .selection-note {
+	color: var(--text-soft);
+	font-size: 0.96rem;
+}
+
+.selected-card {
+	border-color: rgba(42, 235, 164, 0.32);
+	background: rgba(14, 34, 53, 0.95);
+}
+
+.empty-selection {
+	color: var(--text-soft);
+	font-size: 0.95rem;
 }
 
 .part-card {
