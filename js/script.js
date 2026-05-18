@@ -69,6 +69,50 @@ const brandColors = {
 	wd: 0x2c83ff
 };
 
+const brandPhotoDomains = {
+	amd: "amd.com",
+	apc: "apc.com",
+	arctic: "arctic.de",
+	asus: "asus.com",
+	be_quiet: "bequiet.com",
+	corsair: "corsair.com",
+	cougar: "cougargaming.com",
+	crucial: "crucial.com",
+	cyberpower: "cyberpowersystems.com",
+	deepcool: "deepcool.com",
+	eaton: "eaton.com",
+	ek: "ekwb.com",
+	evga: "evga.com",
+	fractal: "fractal-design.com",
+	g_skill: "gskill.com",
+	gigabyte: "gigabyte.com",
+	intel: "intel.com",
+	kingston: "kingston.com",
+	lian_li: "lian-li.com",
+	msi: "msi.com",
+	noctua: "noctua.at",
+	nvidia: "nvidia.com",
+	nzxt: "nzxt.com",
+	phanteks: "phanteks.com",
+	samsung: "samsung.com",
+	seagate: "seagate.com",
+	seasonic: "seasonic.com",
+	thermaltake: "thermaltake.com",
+	wd: "westerndigital.com"
+};
+
+const productPhotoTerms = {
+	cpu: "desktop processor",
+	gpu: "graphics card",
+	ram: "memory kit",
+	storage: "ssd hdd drive",
+	power_supply: "power supply",
+	cooler: "cpu cooler",
+	motherboard: "motherboard",
+	case: "pc case chassis",
+	ups: "ups battery backup"
+};
+
 let loadedSections = [];
 let selectedItems = [];
 let activeCategory = categoryOrder[0];
@@ -77,6 +121,7 @@ let categoryButtonsContainer = null;
 let currentCategoryTitle = null;
 let categoryModelContainer = null;
 let currentCardsContainer = null;
+let buildSummaryContainer = null;
 let threeModulePromise = null;
 let active3DPreviews = [];
 
@@ -97,6 +142,7 @@ function parsePrologFile(text) {
 	for (const rawLine of lines) {
 		const line = rawLine.trim();
 		if (!line || line.startsWith("%")) continue;
+		if (rawLine !== rawLine.trimStart()) continue;
 
 		const match = line.match(/^(\w+)\((.*)\)\.$/);
 		if (!match) continue;
@@ -167,9 +213,13 @@ function buildItem(predicate, args) {
 	const id = args[0] || "";
 	const brand = args[1] || "";
 	const name = args[2] || "";
-	const price = Number(args[3]) || 0;
+	const price = Number(args[3]);
 	const usage = args[4] || "";
 	const level = args[5] || "";
+
+	if (!isValidProductRecord({ id, brand, name, price, usage })) {
+		return null;
+	}
 
 	const item = { id, brand, name, price, usage, level };
 
@@ -205,6 +255,34 @@ function buildItem(predicate, args) {
 	}
 
 	return item;
+}
+
+function isValidProductRecord({ id, brand, name, price, usage }) {
+	if (!id || !brand || !name || !usage) return false;
+	if (!Number.isFinite(price) || price < 0) return false;
+	if (brand === "_" || isPrologVariableToken(brand)) return false;
+	if (isPlaceholderProductName(name)) return false;
+	return true;
+}
+
+function isPrologVariableToken(value) {
+	return /^[A-Z_][A-Za-z0-9_]*$/.test(value);
+}
+
+function isPlaceholderProductName(name) {
+	const placeholders = new Set([
+		"CPU",
+		"GPU",
+		"RAM",
+		"Storage",
+		"Cooler",
+		"MB",
+		"Case",
+		"PSU",
+		"UPS",
+		"Nombre"
+	]);
+	return placeholders.has(name);
 }
 document.addEventListener("DOMContentLoaded", () => {
 	const btnComenzar = document.getElementById("btnComenzar");
@@ -251,6 +329,7 @@ function initializeSelectionPanel(container) {
 		<div id="currentCategoryTitle" class="current-category-title"></div>
 		<div id="categoryModelContainer" class="category-model-panel"></div>
 		<div id="currentCardsContainer" class="recommendation-grid"></div>
+		<div id="buildSummaryContainer" class="build-summary" hidden></div>
 	`;
 
 	selectedCardsContainer = container.querySelector("#selectedCardsContainer");
@@ -258,6 +337,7 @@ function initializeSelectionPanel(container) {
 	currentCategoryTitle = container.querySelector("#currentCategoryTitle");
 	categoryModelContainer = container.querySelector("#categoryModelContainer");
 	currentCardsContainer = container.querySelector("#currentCardsContainer");
+	buildSummaryContainer = container.querySelector("#buildSummaryContainer");
 
 	renderCategoryButtons();
 	renderSelectedCards();
@@ -377,7 +457,7 @@ function selectItem(section, item) {
 	});
 
 	renderSelectedCards();
-	renderCurrentCategory();
+	renderBuildSummary();
 	navigateToNextCategory();
 }
 
@@ -387,7 +467,11 @@ function navigateToNextCategory() {
 		activeCategory = remaining[0];
 		renderCategoryButtons();
 		renderCurrentCategory();
+		return;
 	}
+
+	renderCategoryButtons();
+	renderCompletionView();
 }
 
 function resetSelection() {
@@ -396,6 +480,119 @@ function resetSelection() {
 	renderCategoryButtons();
 	renderSelectedCards();
 	renderCurrentCategory();
+	renderBuildSummary();
+}
+
+function renderCompletionView() {
+	currentCategoryTitle.innerHTML = `<h2>Build completa</h2><p class="selection-note">Este es el resumen final de tu configuracion.</p>`;
+	clearContainer(categoryModelContainer);
+	clearContainer(currentCardsContainer);
+	renderBuildSummary();
+	buildSummaryContainer?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderBuildSummary() {
+	if (!buildSummaryContainer) return;
+
+	if (!isBuildComplete()) {
+		buildSummaryContainer.hidden = true;
+		buildSummaryContainer.innerHTML = "";
+		return;
+	}
+
+	const orderedItems = getAvailableCategoryKeys()
+		.map(typeKey => selectedItems.find(item => item.typeKey === typeKey))
+		.filter(Boolean);
+	const total = orderedItems.reduce((sum, item) => sum + item.price, 0);
+	const focus = getBuildFocus(orderedItems);
+
+	buildSummaryContainer.hidden = false;
+	buildSummaryContainer.innerHTML = `
+		<div class="summary-header">
+			<div>
+				<p class="summary-kicker">Resumen final</p>
+				<h2>Tu PC completa</h2>
+			</div>
+			<div class="summary-total">
+				<span>Total estimado</span>
+				<strong>${formatPrice(total)}</strong>
+			</div>
+		</div>
+		<div class="summary-focus">
+			<span class="tag">Enfoque</span>
+			<h3>${focus.title}</h3>
+			<p>${focus.description}</p>
+		</div>
+		<div class="summary-list">
+			${orderedItems.map(item => `
+				<div class="summary-row">
+					<span>${escapeHtml(typeTitles[item.typeKey] || item.categoryLabel)}</span>
+					<strong>${escapeHtml(item.name)}</strong>
+					<em>${formatPrice(item.price)}</em>
+				</div>
+			`).join("")}
+		</div>
+	`;
+}
+
+function isBuildComplete() {
+	const availableCategories = getAvailableCategoryKeys();
+	return availableCategories.length > 0 && availableCategories.every(typeKey => selectedItems.some(item => item.typeKey === typeKey));
+}
+
+function getAvailableCategoryKeys() {
+	return categoryOrder.filter(type => loadedSections.some(section => section.typeKey === type));
+}
+
+function getBuildFocus(items) {
+	const text = items.map(item => `${item.name} ${item.usage} ${item.level} ${item.memory || ""} ${item.type || ""}`).join(" ").toLowerCase();
+	const gpu = items.find(item => item.typeKey === "gpu");
+	const cpu = items.find(item => item.typeKey === "cpu");
+	const ram = items.find(item => item.typeKey === "ram");
+	const storage = items.find(item => item.typeKey === "storage");
+	const scores = {
+		gaming: countMatches(text, ["gaming", "jugar", "1080p", "1440p", "2k", "4k"]),
+		streaming: countMatches(text, ["streaming", "stream"]),
+		productivity: countMatches(text, ["productividad", "profesional", "trabajo", "workstation", "servidor", "nas"]),
+		general: countMatches(text, ["oficina", "general", "basico", "básico"])
+	};
+
+	if (scores.gaming >= scores.productivity && scores.gaming > 0) {
+		const resolution = getGamingResolution(gpu);
+		const streaming = scores.streaming > 0 ? " Tambien tiene buen perfil para streaming." : "";
+		return {
+			title: `Gaming ${resolution}`,
+			description: `Buena para jugar en ${resolution}, con ${gpu?.name || "la tarjeta grafica elegida"} y ${cpu?.name || "el procesador elegido"}.${streaming}`
+		};
+	}
+
+	if (scores.productivity > scores.gaming) {
+		return {
+			title: "Productividad y trabajo",
+			description: `Buena para tareas de trabajo, multitarea y cargas profesionales, apoyada por ${cpu?.name || "el procesador elegido"} y ${ram?.name || "la memoria elegida"}.`
+		};
+	}
+
+	return {
+		title: "Uso general equilibrado",
+		description: `Buena para uso diario, almacenamiento y tareas generales. ${storage ? `El almacenamiento elegido es ${storage.name}.` : ""}`
+	};
+}
+
+function countMatches(text, terms) {
+	return terms.reduce((count, term) => count + (text.includes(term) ? 1 : 0), 0);
+}
+
+function getGamingResolution(gpu) {
+	const text = `${gpu?.usage || ""} ${gpu?.level || ""}`.toLowerCase();
+	if (text.includes("4k")) return "4K";
+	if (text.includes("1440p") || text.includes("2k")) return "1440p / 2K";
+	if (text.includes("1080p")) return "1080p";
+	return "equilibrado";
+}
+
+function formatPrice(value) {
+	return `$${new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 }).format(value)}`;
 }
 
 function renderCategoryModel(section) {
@@ -437,9 +634,18 @@ function createProductPhotoMarkup(item, section) {
 }
 
 function getProductPhotoUrl(item, typeKey) {
-	const category = typeTitles[typeKey] || typeTags[typeKey] || "hardware";
-	const query = `${item.name} ${category} official product photo`;
+	const query = buildProductPhotoQuery(item, typeKey);
 	return `https://tse.mm.bing.net/th?q=${encodeURIComponent(query)}&w=640&h=420&c=7&rs=1&p=0&o=5&pid=1.7`;
+}
+
+function buildProductPhotoQuery(item, typeKey) {
+	if (typeKey === "cpu") {
+		return `${item.name} processor box product photo`;
+	}
+
+	const category = productPhotoTerms[typeKey] || "computer hardware";
+	const domain = brandPhotoDomains[item.brand] || "";
+	return `${item.name} ${category} official product image ${domain ? `site:${domain}` : ""}`.trim();
 }
 
 function wireProductImageFallback(card, item, typeKey) {
