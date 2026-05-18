@@ -283,7 +283,6 @@ body {
 .config-wrapper {
 	position: relative;
 	z-index: 1;
-	width: 100%;
 	min-height: 100vh;
 	display: grid;
 	place-items: center;
@@ -411,186 +410,6 @@ body {
 	padding: 1rem;
 	background: rgba(12, 22, 43, 0.88);
 	box-shadow: 0 0 18px rgba(28, 240, 255, 0.08);
-	overflow: hidden;
-	position: relative;
-	transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.recommendation-card:hover,
-.recommendation-card.selected {
-	border-color: rgba(28, 240, 255, 0.48);
-	box-shadow: 0 0 24px rgba(28, 240, 255, 0.16);
-	transform: translateY(-2px);
-}
-
-.model-stage {
-	position: relative;
-	width: 100%;
-	height: 170px;
-	margin-bottom: 0.9rem;
-	border: 1px solid rgba(28, 240, 255, 0.16);
-	border-radius: 12px;
-	background:
-		radial-gradient(circle at 50% 40%, rgba(28, 240, 255, 0.18), transparent 38%),
-		linear-gradient(145deg, rgba(4, 9, 24, 0.92), rgba(14, 28, 54, 0.78));
-	box-shadow: inset 0 0 22px rgba(28, 240, 255, 0.08);
-	overflow: hidden;
-	cursor: grab;
-	touch-action: none;
-	user-select: none;
-}
-
-.model-stage:active {
-	cursor: grabbing;
-}
-
-.model-stage::before {
-	content: "";
-	position: absolute;
-	inset: auto 12% 14px;
-	height: 1px;
-	background: linear-gradient(90deg, transparent, rgba(139, 255, 61, 0.85), transparent);
-	box-shadow: 0 0 12px rgba(139, 255, 61, 0.55);
-	pointer-events: none;
-}
-
-.model-stage canvas {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	display: block;
-}
-
-.model-stage-compact {
-	height: 135px;
-}
-
-.model-loader,
-.model-fallback {
-	position: absolute;
-	inset: 0;
-	display: grid;
-	place-items: center;
-	color: var(--accent-cyan);
-	font-family: "Orbitron", sans-serif;
-	font-size: 0.72rem;
-	letter-spacing: 0.08rem;
-	text-transform: uppercase;
-}
-
-.model-fallback {
-	font-size: 1.5rem;
-	color: var(--accent-lime);
-}
-
-.category-model-panel {
-	display: grid;
-	grid-template-columns: minmax(0, 0.85fr) minmax(280px, 1.15fr);
-	gap: 1rem;
-	align-items: stretch;
-	margin-bottom: 1.2rem;
-	border: 1px solid rgba(28, 240, 255, 0.18);
-	border-radius: 16px;
-	background:
-		linear-gradient(135deg, rgba(12, 22, 43, 0.92), rgba(9, 14, 33, 0.78)),
-		radial-gradient(circle at 76% 48%, rgba(139, 255, 61, 0.16), transparent 42%);
-	padding: 1rem;
-	box-shadow: 0 0 22px rgba(28, 240, 255, 0.1);
-}
-
-.category-model-info {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 0.75rem;
-	min-width: 0;
-}
-
-.category-model-info .tag {
-	width: fit-content;
-	display: inline-flex;
-	padding: 0.25rem 0.6rem;
-	border-radius: 999px;
-	font-size: 0.75rem;
-	letter-spacing: 0.08rem;
-	text-transform: uppercase;
-	background: rgba(28, 240, 255, 0.12);
-	color: var(--accent-cyan);
-}
-
-.category-model-info h3 {
-	font-family: "Orbitron", sans-serif;
-	font-size: clamp(1.25rem, 3vw, 2.2rem);
-	color: var(--text-main);
-	text-shadow: 0 0 16px rgba(28, 240, 255, 0.36);
-}
-
-.section-model-stage {
-	height: 300px;
-	margin-bottom: 0;
-}
-
-.product-photo {
-	position: relative;
-	width: 100%;
-	aspect-ratio: 16 / 10;
-	margin-bottom: 0.9rem;
-	border: 1px solid rgba(28, 240, 255, 0.14);
-	border-radius: 12px;
-	background:
-		radial-gradient(circle at center, rgba(28, 240, 255, 0.18), transparent 52%),
-		linear-gradient(145deg, rgba(4, 9, 24, 0.94), rgba(16, 29, 56, 0.76));
-	box-shadow: inset 0 0 24px rgba(28, 240, 255, 0.08), 0 0 18px rgba(28, 240, 255, 0.05);
-	overflow: hidden;
-}
-
-.product-photo::after {
-	content: attr(data-tag);
-	position: absolute;
-	left: 0.75rem;
-	bottom: 0.65rem;
-	padding: 0.18rem 0.5rem;
-	border-radius: 999px;
-	background: rgba(4, 9, 24, 0.74);
-	color: var(--accent-cyan);
-	font-size: 0.66rem;
-	font-weight: 700;
-	letter-spacing: 0.08rem;
-	text-transform: uppercase;
-}
-
-.product-photo img {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	object-fit: contain;
-	padding: 0.72rem;
-	filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.42));
-	opacity: 0;
-	transform: scale(0.96);
-	transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.product-photo.image-loaded img {
-	opacity: 1;
-	transform: scale(1);
-}
-
-.product-photo-fallback {
-	position: absolute;
-	inset: 0;
-	display: grid;
-	place-items: center;
-	color: var(--accent-cyan);
-	font-family: "Orbitron", sans-serif;
-	font-size: 1.35rem;
-	opacity: 0.72;
-}
-
-.product-photo.image-loaded .product-photo-fallback {
-	display: none;
 }
 
 .recommendation-card h3 {
@@ -788,26 +607,9 @@ body {
 }
 
 @media (max-width: 560px) {
-	.hero-wrapper,
-	.config-wrapper {
-		padding: 0.8rem;
-		display: block;
-	}
-
 	.hero-panel,
 	.config-panel {
-		width: calc(100vw - 1.6rem);
-		max-width: 100%;
-		min-width: 0;
 		border-radius: 16px;
-		padding: 1.15rem;
-	}
-
-	.selection-panel,
-	.selected-cards,
-	.current-category-title,
-	.recommendation-card {
-		min-width: 0;
 	}
 
 	.hero-copy,
@@ -817,43 +619,5 @@ body {
 
 	.actions {
 		flex-direction: column;
-	}
-
-	.category-buttons {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.category-button {
-		width: 100%;
-		padding: 0.6rem 0.55rem;
-		white-space: normal;
-		overflow-wrap: anywhere;
-		font-size: 0.88rem;
-	}
-
-	.recommendation-grid {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.category-model-panel {
-		grid-template-columns: minmax(0, 1fr);
-		padding: 0.85rem;
-	}
-
-	.category-model-info h3 {
-		font-size: 1.35rem;
-	}
-
-	.model-stage {
-		height: 150px;
-	}
-
-	.section-model-stage {
-		height: 220px;
-	}
-
-	.model-stage-compact {
-		height: 125px;
 	}
 }
