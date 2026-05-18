@@ -36,13 +36,49 @@ const categoryOrder = [
 	"ups"
 ];
 
+const brandColors = {
+	amd: 0xed1c24,
+	apc: 0x3ec16f,
+	arctic: 0x54b6ff,
+	asus: 0xff3158,
+	be_quiet: 0x9aa4b2,
+	corsair: 0xffd24d,
+	cougar: 0xf5a623,
+	crucial: 0x3cb4ff,
+	cyberpower: 0xe23b3b,
+	deepcool: 0x13d6a4,
+	eaton: 0x3f75ff,
+	ek: 0xd9e6f2,
+	evga: 0xb9c1cf,
+	fractal: 0x79d7ff,
+	g_skill: 0xff4fd8,
+	gigabyte: 0xff8f1f,
+	intel: 0x1cf0ff,
+	kingston: 0xff3158,
+	lian_li: 0xdfe8ff,
+	msi: 0xff3158,
+	noctua: 0xc18a5b,
+	none: 0x8b95aa,
+	nvidia: 0x8bff3d,
+	nzxt: 0xb079ff,
+	phanteks: 0x6fe6ff,
+	samsung: 0x4e8dff,
+	seagate: 0x7ddc63,
+	seasonic: 0x74d8ff,
+	thermaltake: 0xff4f6d,
+	wd: 0x2c83ff
+};
+
 let loadedSections = [];
 let selectedItems = [];
 let activeCategory = categoryOrder[0];
 let selectedCardsContainer = null;
 let categoryButtonsContainer = null;
 let currentCategoryTitle = null;
+let categoryModelContainer = null;
 let currentCardsContainer = null;
+let threeModulePromise = null;
+let active3DPreviews = [];
 
 async function loadPrologData() {
 	const response = await fetch(prologPath);
@@ -128,12 +164,14 @@ function splitPrologArgs(argString) {
 }
 
 function buildItem(predicate, args) {
+	const id = args[0] || "";
+	const brand = args[1] || "";
 	const name = args[2] || "";
 	const price = Number(args[3]) || 0;
 	const usage = args[4] || "";
 	const level = args[5] || "";
 
-	const item = { name, price, usage, level };
+	const item = { id, brand, name, price, usage, level };
 
 	switch (predicate) {
 		case "cpu":
@@ -211,12 +249,14 @@ function initializeSelectionPanel(container) {
 		<div id="selectedCardsContainer" class="selected-cards"></div>
 		<div id="categoryButtons" class="category-buttons"></div>
 		<div id="currentCategoryTitle" class="current-category-title"></div>
+		<div id="categoryModelContainer" class="category-model-panel"></div>
 		<div id="currentCardsContainer" class="recommendation-grid"></div>
 	`;
 
 	selectedCardsContainer = container.querySelector("#selectedCardsContainer");
 	categoryButtonsContainer = container.querySelector("#categoryButtons");
 	currentCategoryTitle = container.querySelector("#currentCategoryTitle");
+	categoryModelContainer = container.querySelector("#categoryModelContainer");
 	currentCardsContainer = container.querySelector("#currentCardsContainer");
 
 	renderCategoryButtons();
@@ -243,7 +283,7 @@ function renderCategoryButtons() {
 }
 
 function renderSelectedCards() {
-	selectedCardsContainer.innerHTML = "";
+	clearContainer(selectedCardsContainer);
 
 	const header = document.createElement("div");
 	header.innerHTML = `<h2>Componentes seleccionados</h2>`;
@@ -263,11 +303,13 @@ function renderSelectedCards() {
 		const card = document.createElement("article");
 		card.className = "recommendation-card selected-card";
 		card.innerHTML = `
+			${createProductPhotoMarkup(item, { typeKey: item.typeKey, title: item.categoryLabel })}
 			<h3>${item.name}</h3>
 			<p><span class="tag">${item.categoryLabel}</span></p>
 			<p><strong>Uso:</strong> ${item.usage}</p>
 			<p><strong>Precio:</strong> $${item.price}</p>
 		`;
+		wireProductImageFallback(card, item, item.typeKey);
 		grid.appendChild(card);
 	});
 	selectedCardsContainer.appendChild(grid);
@@ -277,14 +319,16 @@ function renderCurrentCategory() {
 	const section = loadedSections.find(section => section.typeKey === activeCategory);
 	if (!section) {
 		currentCategoryTitle.textContent = "Categoría no disponible";
-		currentCardsContainer.innerHTML = "";
+		clearContainer(categoryModelContainer);
+		clearContainer(currentCardsContainer);
 		return;
 	}
 
 	const selectedItemForCategory = selectedItems.some(item => item.typeKey === activeCategory);
 	currentCategoryTitle.innerHTML = `<h2>Elige ${section.title}</h2><p class="selection-note">${selectedItemForCategory ? "Ya seleccionaste un componente para esta categoría." : "Haz clic en una tarjeta para agregarla a tu build."}</p>`;
 
-	currentCardsContainer.innerHTML = "";
+	renderCategoryModel(section);
+	clearContainer(currentCardsContainer);
 	section.items.forEach(item => {
 		const card = createItemCard(item, section);
 		currentCardsContainer.appendChild(card);
@@ -296,6 +340,7 @@ function createItemCard(item, section) {
 	const card = document.createElement("article");
 	card.className = `recommendation-card ${isSelected ? "selected" : ""}`;
 	card.innerHTML = `
+		${createProductPhotoMarkup(item, section)}
 		<h3>${item.name}</h3>
 		<p><span class="tag">${section.type}</span></p>
 		<p><strong>Uso:</strong> ${item.usage}</p>
@@ -308,6 +353,8 @@ function createItemCard(item, section) {
 		${item.form ? `<p><strong>Formato:</strong> ${item.form}</p>` : ""}
 		${item.level ? `<p><strong>Descripción:</strong> ${item.level}</p>` : ""}
 	`;
+
+	wireProductImageFallback(card, item, section.typeKey);
 
 	if (!isSelected) {
 		card.addEventListener("click", () => {
@@ -349,5 +396,484 @@ function resetSelection() {
 	renderCategoryButtons();
 	renderSelectedCards();
 	renderCurrentCategory();
+}
+
+function renderCategoryModel(section) {
+	clearContainer(categoryModelContainer);
+	categoryModelContainer.innerHTML = `
+		<div class="category-model-info">
+			<span class="tag">${section.type}</span>
+			<h3>${section.title}</h3>
+		</div>
+		<div class="model-stage section-model-stage" aria-label="Modelo 3D de ${escapeHtml(section.title)}">
+			<div class="model-loader">Generando 3D</div>
+		</div>
+	`;
+	mount3DPreview(categoryModelContainer.querySelector(".model-stage"), section.typeKey, createSectionModelItem(section));
+}
+
+function createSectionModelItem(section) {
+	const selected = selectedItems.find(item => item.typeKey === section.typeKey);
+	const base = selected || section.items[0] || {};
+	return {
+		...base,
+		name: section.title,
+		typeKey: section.typeKey
+	};
+}
+
+function createProductPhotoMarkup(item, section) {
+	return `
+		<div class="product-photo" aria-label="Foto de ${escapeHtml(item.name)}">
+			<img
+				src="${getProductPhotoUrl(item, section.typeKey)}"
+				alt="Foto de ${escapeHtml(item.name)}"
+				loading="lazy"
+				referrerpolicy="no-referrer"
+			>
+			<div class="product-photo-fallback">${escapeHtml(typeTags[section.typeKey] || "Hardware")}</div>
+		</div>
+	`;
+}
+
+function getProductPhotoUrl(item, typeKey) {
+	const category = typeTitles[typeKey] || typeTags[typeKey] || "hardware";
+	const query = `${item.name} ${category} official product photo`;
+	return `https://tse.mm.bing.net/th?q=${encodeURIComponent(query)}&w=640&h=420&c=7&rs=1&p=0&o=5&pid=1.7`;
+}
+
+function wireProductImageFallback(card, item, typeKey) {
+	const image = card.querySelector(".product-photo img");
+	const photo = card.querySelector(".product-photo");
+	if (!image || !photo) return;
+
+	image.addEventListener("load", () => {
+		photo.classList.add("image-loaded");
+	});
+
+	image.addEventListener("error", () => {
+		photo.classList.add("image-error");
+		image.remove();
+	});
+
+	if (image.complete && image.naturalWidth > 0) {
+		photo.classList.add("image-loaded");
+	} else if (image.complete && image.naturalWidth === 0) {
+		photo.classList.add("image-error");
+		image.remove();
+	}
+
+	photo.style.setProperty("--brand-color", `#${(brandColors[item.brand] || brandColors[item.id?.split("_")[0]] || 0x1cf0ff).toString(16).padStart(6, "0")}`);
+	photo.dataset.tag = typeTags[typeKey] || "HW";
+}
+
+function clearContainer(container) {
+	if (!container) return;
+	disposePreviewsInside(container);
+	container.innerHTML = "";
+}
+
+function disposePreviewsInside(root) {
+	active3DPreviews = active3DPreviews.filter(preview => {
+		if (root.contains(preview.mount)) {
+			preview.dispose();
+			return false;
+		}
+		return true;
+	});
+}
+
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function loadThree() {
+	if (!threeModulePromise) {
+		threeModulePromise = import("https://cdn.jsdelivr.net/npm/three@0.181.2/build/three.module.js");
+	}
+	return threeModulePromise;
+}
+
+async function mount3DPreview(mount, typeKey, item) {
+	if (!mount) return;
+
+	try {
+		const THREE = await loadThree();
+		if (!mount.isConnected) return;
+
+		mount.innerHTML = "";
+		const preview = create3DPreview(THREE, mount, typeKey, item);
+		active3DPreviews.push(preview);
+	} catch (error) {
+		console.error("No se pudo cargar Three.js", error);
+		mount.classList.add("model-stage-fallback");
+		mount.innerHTML = `<div class="model-fallback">${typeTags[typeKey] || "3D"}</div>`;
+	}
+}
+
+function create3DPreview(THREE, mount, typeKey, item) {
+	const scene = new THREE.Scene();
+	const width = Math.max(mount.clientWidth, 220);
+	const height = Math.max(mount.clientHeight, 150);
+	const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+	const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+	const clock = new THREE.Clock();
+	const interaction = {
+		active: false,
+		lastX: 0,
+		lastY: 0,
+		rotationX: 0,
+		rotationY: 0,
+		zoom: 1
+	};
+	let disposed = false;
+	let frameId = 0;
+
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+	renderer.setSize(width, height, false);
+	mount.appendChild(renderer.domElement);
+
+	camera.position.set(3.8, 2.4, 5.5);
+	camera.lookAt(0, 0, 0);
+
+	const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
+	keyLight.position.set(3, 5, 6);
+	scene.add(keyLight);
+	scene.add(new THREE.AmbientLight(0x9fb7ff, 1.6));
+
+	const rimLight = new THREE.PointLight(0x1cf0ff, 1.6, 10);
+	rimLight.position.set(-3, 1.8, 2);
+	scene.add(rimLight);
+
+	const group = new THREE.Group();
+	const accent = brandColors[item.brand] || brandColors[item.id?.split("_")[0]] || 0x1cf0ff;
+	buildComponentModel(THREE, group, typeKey, item, accent);
+	scene.add(group);
+
+	const base = new THREE.Mesh(
+		new THREE.CylinderGeometry(1.95, 2.2, 0.06, 72),
+		new THREE.MeshStandardMaterial({
+			color: 0x0b152b,
+			metalness: 0.25,
+			roughness: 0.45,
+			emissive: 0x0b3d52,
+			emissiveIntensity: 0.35
+		})
+	);
+	base.position.y = -1.25;
+	scene.add(base);
+
+	const resizeObserver = new ResizeObserver(() => {
+		if (disposed) return;
+		const nextWidth = Math.max(mount.clientWidth, 220);
+		const nextHeight = Math.max(mount.clientHeight, 150);
+		camera.aspect = nextWidth / nextHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(nextWidth, nextHeight, false);
+	});
+	resizeObserver.observe(mount);
+
+	const handlePointerDown = event => {
+		interaction.active = true;
+		interaction.lastX = event.clientX;
+		interaction.lastY = event.clientY;
+		mount.setPointerCapture?.(event.pointerId);
+	};
+
+	const handlePointerMove = event => {
+		if (!interaction.active) return;
+		const deltaX = event.clientX - interaction.lastX;
+		const deltaY = event.clientY - interaction.lastY;
+		interaction.rotationY += deltaX * 0.012;
+		interaction.rotationX += deltaY * 0.01;
+		interaction.rotationX = Math.max(-0.85, Math.min(0.85, interaction.rotationX));
+		interaction.lastX = event.clientX;
+		interaction.lastY = event.clientY;
+	};
+
+	const handlePointerUp = event => {
+		interaction.active = false;
+		mount.releasePointerCapture?.(event.pointerId);
+	};
+
+	const handleWheel = event => {
+		event.preventDefault();
+		interaction.zoom = Math.max(0.78, Math.min(1.25, interaction.zoom + Math.sign(event.deltaY) * 0.05));
+	};
+
+	mount.addEventListener("pointerdown", handlePointerDown);
+	mount.addEventListener("pointermove", handlePointerMove);
+	mount.addEventListener("pointerup", handlePointerUp);
+	mount.addEventListener("pointercancel", handlePointerUp);
+	mount.addEventListener("wheel", handleWheel, { passive: false });
+
+	const animate = () => {
+		if (disposed || !mount.isConnected) {
+			dispose();
+			return;
+		}
+		const elapsed = clock.getElapsedTime();
+		group.rotation.y = elapsed * 0.48 + interaction.rotationY;
+		group.rotation.x = Math.sin(elapsed * 0.9) * 0.1 + interaction.rotationX;
+		group.position.y = Math.sin(elapsed * 1.4) * 0.08;
+		camera.position.set(3.8 * interaction.zoom, 2.4 * interaction.zoom, 5.5 * interaction.zoom);
+		camera.lookAt(0, 0, 0);
+		base.rotation.y = -elapsed * 0.28;
+		animateModelParts(group, elapsed);
+		renderer.render(scene, camera);
+		frameId = requestAnimationFrame(animate);
+	};
+	animate();
+
+	function dispose() {
+		if (disposed) return;
+		disposed = true;
+		cancelAnimationFrame(frameId);
+		resizeObserver.disconnect();
+		mount.removeEventListener("pointerdown", handlePointerDown);
+		mount.removeEventListener("pointermove", handlePointerMove);
+		mount.removeEventListener("pointerup", handlePointerUp);
+		mount.removeEventListener("pointercancel", handlePointerUp);
+		mount.removeEventListener("wheel", handleWheel);
+		scene.traverse(object => {
+			if (object.geometry) object.geometry.dispose();
+			if (object.material) {
+				if (Array.isArray(object.material)) {
+					object.material.forEach(material => material.dispose());
+				} else {
+					object.material.dispose();
+				}
+			}
+		});
+		renderer.dispose();
+		if (renderer.domElement.parentNode) {
+			renderer.domElement.parentNode.removeChild(renderer.domElement);
+		}
+	}
+
+	return { mount, dispose };
+}
+
+function buildComponentModel(THREE, group, typeKey, item, accent) {
+	const materials = createMaterials(THREE, accent);
+	switch (typeKey) {
+		case "cpu":
+			buildCpuModel(THREE, group, materials);
+			break;
+		case "gpu":
+			buildGpuModel(THREE, group, materials);
+			break;
+		case "ram":
+			buildRamModel(THREE, group, materials);
+			break;
+		case "storage":
+			buildStorageModel(THREE, group, materials, item);
+			break;
+		case "power_supply":
+			buildPowerSupplyModel(THREE, group, materials);
+			break;
+		case "cooler":
+			buildCoolerModel(THREE, group, materials, item);
+			break;
+		case "motherboard":
+			buildMotherboardModel(THREE, group, materials);
+			break;
+		case "case":
+			buildCaseModel(THREE, group, materials);
+			break;
+		case "ups":
+			buildUpsModel(THREE, group, materials);
+			break;
+		default:
+			buildGenericModel(THREE, group, materials);
+	}
+}
+
+function createMaterials(THREE, accent) {
+	return {
+		accent: new THREE.MeshStandardMaterial({ color: accent, metalness: 0.45, roughness: 0.28, emissive: accent, emissiveIntensity: 0.12 }),
+		black: new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.35, roughness: 0.42 }),
+		board: new THREE.MeshStandardMaterial({ color: 0x153c36, metalness: 0.22, roughness: 0.46 }),
+		darkBoard: new THREE.MeshStandardMaterial({ color: 0x101827, metalness: 0.26, roughness: 0.45 }),
+		glass: new THREE.MeshStandardMaterial({ color: 0x75e6ff, metalness: 0.05, roughness: 0.05, transparent: true, opacity: 0.22 }),
+		gold: new THREE.MeshStandardMaterial({ color: 0xf5c84b, metalness: 0.75, roughness: 0.24 }),
+		metal: new THREE.MeshStandardMaterial({ color: 0xc3ccd8, metalness: 0.72, roughness: 0.25 }),
+		rubber: new THREE.MeshStandardMaterial({ color: 0x060a12, metalness: 0.2, roughness: 0.58 })
+	};
+}
+
+function addBox(THREE, group, size, position, material) {
+	const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material);
+	mesh.position.set(position[0], position[1], position[2]);
+	group.add(mesh);
+	return mesh;
+}
+
+function buildCpuModel(THREE, group, materials) {
+	addBox(THREE, group, [2.1, 0.18, 2.1], [0, 0, 0], materials.gold);
+	addBox(THREE, group, [1.65, 0.22, 1.65], [0, 0.2, 0], materials.metal);
+	addBox(THREE, group, [1.1, 0.05, 1.1], [0, 0.34, 0], materials.accent);
+	for (let i = -6; i <= 6; i++) {
+		addBox(THREE, group, [0.04, 0.08, 0.18], [i * 0.15, -0.08, -1.12], materials.gold);
+		addBox(THREE, group, [0.04, 0.08, 0.18], [i * 0.15, -0.08, 1.12], materials.gold);
+		addBox(THREE, group, [0.18, 0.08, 0.04], [-1.12, -0.08, i * 0.15], materials.gold);
+		addBox(THREE, group, [0.18, 0.08, 0.04], [1.12, -0.08, i * 0.15], materials.gold);
+	}
+}
+
+function buildGpuModel(THREE, group, materials) {
+	addBox(THREE, group, [3.1, 1.15, 0.24], [0, 0, 0], materials.darkBoard);
+	addBox(THREE, group, [3.25, 0.18, 0.38], [0, -0.75, 0.02], materials.gold);
+	addBox(THREE, group, [0.15, 1.45, 0.48], [-1.7, 0, 0.04], materials.metal);
+	for (const x of [-0.8, 0.65]) {
+		const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.11, 48), materials.rubber);
+		fan.position.set(x, 0.02, 0.2);
+		fan.rotation.x = Math.PI / 2;
+		fan.userData.spin = true;
+		group.add(fan);
+		for (let i = 0; i < 6; i++) {
+			const blade = addBox(THREE, fan, [0.08, 0.32, 0.02], [0, 0.18, 0], materials.metal);
+			blade.rotation.z = i * Math.PI / 3;
+		}
+	}
+	addBox(THREE, group, [2.65, 0.13, 0.16], [0.1, 0.66, 0.18], materials.accent);
+}
+
+function buildRamModel(THREE, group, materials) {
+	for (const z of [-0.18, 0.18]) {
+		const stick = new THREE.Group();
+		addBox(THREE, stick, [2.8, 0.55, 0.08], [0, 0, z], materials.board);
+		addBox(THREE, stick, [2.55, 0.12, 0.1], [0, 0.34, z], materials.accent);
+		for (let i = -4; i <= 4; i += 2) {
+			addBox(THREE, stick, [0.36, 0.28, 0.1], [i * 0.26, -0.02, z + 0.02], materials.rubber);
+		}
+		for (let i = -8; i <= 8; i++) {
+			addBox(THREE, stick, [0.06, 0.08, 0.05], [i * 0.14, -0.34, z], materials.gold);
+		}
+		stick.rotation.x = -0.12;
+		group.add(stick);
+	}
+}
+
+function buildStorageModel(THREE, group, materials, item) {
+	const name = item.name.toLowerCase();
+	if (name.includes("hdd") || name.includes("barracuda") || name.includes("ironwolf") || name.includes("purple")) {
+		addBox(THREE, group, [2.25, 0.36, 1.55], [0, 0, 0], materials.rubber);
+		const disk = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 64), materials.metal);
+		disk.position.set(-0.28, 0.24, 0);
+		disk.rotation.x = Math.PI / 2;
+		disk.userData.spin = true;
+		group.add(disk);
+		addBox(THREE, group, [0.75, 0.1, 0.28], [0.55, 0.28, -0.2], materials.accent);
+		return;
+	}
+	if (item.type?.includes("2.5") || name.includes("sata")) {
+		addBox(THREE, group, [2.4, 0.25, 1.45], [0, 0, 0], materials.metal);
+		addBox(THREE, group, [1.8, 0.05, 0.88], [0, 0.16, 0], materials.accent);
+		addBox(THREE, group, [0.58, 0.1, 0.2], [0.95, -0.03, -0.62], materials.gold);
+		return;
+	}
+	addBox(THREE, group, [2.7, 0.12, 0.52], [0, 0, 0], materials.board);
+	addBox(THREE, group, [0.7, 0.18, 0.44], [-0.55, 0.12, 0], materials.rubber);
+	addBox(THREE, group, [0.7, 0.18, 0.44], [0.35, 0.12, 0], materials.rubber);
+	addBox(THREE, group, [0.38, 0.05, 0.5], [1.35, -0.05, 0], materials.gold);
+	addBox(THREE, group, [1.4, 0.07, 0.08], [-0.18, 0.24, 0], materials.accent);
+}
+
+function buildPowerSupplyModel(THREE, group, materials) {
+	addBox(THREE, group, [1.9, 1.25, 1.7], [0, 0, 0], materials.rubber);
+	addBox(THREE, group, [1.6, 0.08, 1.35], [0, 0.66, 0], materials.metal);
+	const fan = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.045, 12, 56), materials.accent);
+	fan.position.set(0, 0.72, 0);
+	fan.rotation.x = Math.PI / 2;
+	fan.userData.spin = true;
+	group.add(fan);
+	for (let i = 0; i < 8; i++) {
+		const grill = addBox(THREE, group, [0.9, 0.03, 0.025], [0, 0.75, 0], materials.rubber);
+		grill.rotation.y = i * Math.PI / 8;
+	}
+	addBox(THREE, group, [1.35, 0.16, 0.3], [0, -0.1, 0.88], materials.accent);
+}
+
+function buildCoolerModel(THREE, group, materials, item) {
+	const liquid = item.type?.toLowerCase().includes("liquid") || item.name.toLowerCase().includes("kraken") || item.name.toLowerCase().includes("h150");
+	if (liquid) {
+		addBox(THREE, group, [2.35, 0.22, 0.82], [0, 0.45, -0.55], materials.metal);
+		for (const x of [-0.65, 0.65]) {
+			const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.08, 40), materials.rubber);
+			fan.position.set(x, 0.6, -0.55);
+			fan.rotation.x = Math.PI / 2;
+			fan.userData.spin = true;
+			group.add(fan);
+		}
+		const pump = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.22, 48), materials.accent);
+		pump.position.set(0, -0.55, 0.55);
+		group.add(pump);
+		addBox(THREE, group, [1.6, 0.08, 0.08], [-0.35, -0.02, 0.0], materials.rubber).rotation.z = -0.45;
+		addBox(THREE, group, [1.6, 0.08, 0.08], [0.35, -0.02, 0.0], materials.rubber).rotation.z = 0.45;
+		return;
+	}
+	for (let i = -5; i <= 5; i++) {
+		addBox(THREE, group, [1.25, 0.04, 1.0], [0, i * 0.1, 0], materials.metal);
+	}
+	const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.54, 0.11, 48), materials.rubber);
+	fan.position.set(0, 0, 0.58);
+	fan.rotation.x = Math.PI / 2;
+	fan.userData.spin = true;
+	group.add(fan);
+	addBox(THREE, group, [0.34, 1.45, 0.12], [0, -0.1, -0.35], materials.accent);
+}
+
+function buildMotherboardModel(THREE, group, materials) {
+	addBox(THREE, group, [2.45, 0.12, 2.45], [0, 0, 0], materials.board);
+	addBox(THREE, group, [0.62, 0.14, 0.62], [-0.35, 0.13, -0.2], materials.metal);
+	for (let i = 0; i < 4; i++) {
+		addBox(THREE, group, [0.12, 0.18, 1.45], [0.75 + i * 0.16, 0.16, -0.2], i % 2 ? materials.accent : materials.rubber);
+	}
+	addBox(THREE, group, [1.45, 0.12, 0.18], [0.35, 0.16, 0.85], materials.gold);
+	addBox(THREE, group, [0.42, 0.18, 0.42], [-0.92, 0.16, 0.78], materials.rubber);
+	addBox(THREE, group, [0.72, 0.2, 0.32], [-0.88, 0.16, -0.94], materials.accent);
+}
+
+function buildCaseModel(THREE, group, materials) {
+	addBox(THREE, group, [1.55, 2.15, 1.15], [0, 0, 0], materials.rubber);
+	addBox(THREE, group, [1.32, 1.82, 0.04], [0.08, 0.02, 0.6], materials.glass);
+	addBox(THREE, group, [1.32, 0.08, 1.05], [0, 1.12, 0], materials.accent);
+	for (const y of [-0.48, 0.1, 0.68]) {
+		const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 36), materials.metal);
+		fan.position.set(-0.82, y, 0);
+		fan.rotation.z = Math.PI / 2;
+		fan.userData.spin = true;
+		group.add(fan);
+	}
+}
+
+function buildUpsModel(THREE, group, materials) {
+	addBox(THREE, group, [1.45, 1.8, 1.15], [0, 0, 0], materials.rubber);
+	addBox(THREE, group, [1.15, 1.45, 0.05], [0, 0.05, 0.6], materials.darkBoard);
+	addBox(THREE, group, [0.72, 0.24, 0.06], [0, 0.42, 0.64], materials.accent);
+	const button = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 32), materials.metal);
+	button.position.set(0, -0.18, 0.64);
+	button.rotation.x = Math.PI / 2;
+	group.add(button);
+}
+
+function buildGenericModel(THREE, group, materials) {
+	addBox(THREE, group, [1.7, 1.1, 1.7], [0, 0, 0], materials.rubber);
+	addBox(THREE, group, [1.2, 0.12, 1.2], [0, 0.65, 0], materials.accent);
+}
+
+function animateModelParts(group, elapsed) {
+	group.traverse(object => {
+		if (object.userData.spin) {
+			object.rotation.z += 0.08;
+			object.rotation.y += Math.sin(elapsed * 1.8) * 0.002;
+		}
+	});
 }
 
